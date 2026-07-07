@@ -1,0 +1,4 @@
+interface:
+  display_name: "参考视频复刻闭环质检"
+  short_description: "参考视频拆解动效复刻HyperFrames/Remotion组件沉淀对齐差分和硬质检"
+  default_prompt: "Use $rn-replica-qc to analyze this reference video, recreate the motion as HyperFrames/Remotion components when needed, and verify alignment with evidence."

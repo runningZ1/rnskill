@@ -4,8 +4,6 @@
 
 雪踏乌云维护的 AI Agent Skills 集合，适用于 Codex、Claude Code 等支持 `SKILL.md` 的 Agent 工作流。
 
-这个仓库用于集中存放我自己长期使用、迭代和发布的 Skills。当前先收录一个 Skill，其他 Skill 后续再逐步加入。
-
 ## 前置要求
 
 - 已安装 Codex、Claude Code 或其他支持项目级 Skill 的 Agent。
@@ -13,71 +11,82 @@
 
 ## 安装
 
-### Codex 项目级安装
+### Claude Code 插件市场
+
+```bash
+claude plugin marketplace add Pluviobyte/rnskill
+claude plugin install rn-renhua@rnskill
+```
+
+### 通用安装（Codex / Claude Code）
+
+```bash
+npx -y skills add Pluviobyte/rnskill -g --all
+```
+
+安装单个 Skill：
+
+```bash
+npx -y skills add Pluviobyte/rnskill --skill rn-renhua
+```
+
+### 手动安装
 
 只把需要的 Skill 复制到目标项目即可：
 
 ```bash
+# Codex
 mkdir -p <project>/.agents/skills
-cp -R skills/renhua <project>/.agents/skills/renhua
-```
+cp -R skills/rn-renhua <project>/.agents/skills/rn-renhua
 
-目录结构示例：
-
-```text
-<project>/
-└── .agents/
-    └── skills/
-        └── renhua/
-            └── SKILL.md
-```
-
-### Claude Code 项目级安装
-
-如果项目使用 `.claude/skills`：
-
-```bash
+# Claude Code
 mkdir -p <project>/.claude/skills
-cp -R skills/renhua <project>/.claude/skills/renhua
+cp -R skills/rn-renhua <project>/.claude/skills/rn-renhua
 ```
 
 ## 可用技能
 
-### 写作技能
+### 写作精修
 
-#### 人话 (`renhua`)
+| Skill | 说明 |
+|-------|------|
+| [`rn-renhua`](skills/rn-renhua/) | 中文 AI/技术写作去 AI 味精修。去除二元对比壳、伪洞察标记、冒号讲义腔等 AI 写作模式，保留作者判断和具体事实。 |
 
-中文 AI/技术写作去 AI 味精修 Skill。
+### 视频制作
 
-适合用于：
+| Skill | 说明 |
+|-------|------|
+| [`rn-motion-director`](skills/rn-motion-director/) | AI 动效导演元 Skill。把选题/脚本转化为动效视频概念：视觉隐喻、运动语法、场景节拍图、Anti-PPT 质量门。 |
+| [`rn-dark-saas-video`](skills/rn-dark-saas-video/) | 暗色 SaaS 魔术短片。黑色星空舞台 + 紫色底光 + 大字动效 + 渐变 CTA。8 套场景蓝图、3 种时长预设。 |
+| [`rn-bw-text-opener`](skills/rn-bw-text-opener/) | 黑白文字打字机开场动画。纯黑背景 + 白色逐字打字 + 同步音效 + 文字替换效果。3 种时长预设，附带 Python 时序规划脚本。 |
 
-- X/Twitter 帖子
-- 中文技术文章
-- AI 模型测评
-- 产品笔记
-- 公开发布前的中文稿件精修
+### 视频质检
 
-调用示例：
-
-```text
-Use $renhua to revise this Chinese AI technical post while preserving my judgment, details, and voice.
-```
-
-本 Skill 默认保留事实、数字、模型名、测试条件和作者判断，避免把技术稿改成顺滑但失去个人判断的泛化文本。
+| Skill | 说明 |
+|-------|------|
+| [`rn-replica-qc`](skills/rn-replica-qc/) | 参考视频复刻闭环质检。三级保真度（像素/视觉/风格）、帧对比 + PSNR/SSIM、可复用运动组件沉淀。附带 Python 对比脚本。 |
 
 ## 目录结构
 
 ```text
 rnskill/
-├── README.zh.md
-├── README.md
-└── skills/
-    └── renhua/
-        ├── SKILL.md
-        └── agents/
-            └── openai.yaml
+├── skills/
+│   ├── rn-renhua/              # 写作：去 AI 味精修
+│   ├── rn-motion-director/     # 视频：动效导演
+│   ├── rn-dark-saas-video/     # 视频：暗色 SaaS 风格
+│   ├── rn-bw-text-opener/      # 视频：黑白打字开场
+│   └── rn-replica-qc/          # 质检：参考视频复刻
+├── docs/                       # 各 Skill 概览页
+├── assets/                     # 展示图片和视频
+├── tools/                      # 打包和构建脚本
+├── .claude-plugin/             # Claude Code 插件市场清单
+└── .github/workflows/          # 发布自动化
 ```
+
+## 许可证
+
+CC BY-NC 4.0。详见 [LICENSE](LICENSE)。
 
 ## 作者
 
-雪踏乌云
+雪踏乌云 · [@Pluvio9yte](https://x.com/Pluvio9yte)
