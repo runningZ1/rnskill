@@ -2,208 +2,166 @@
 name: rn-replica-qc
 description: >
   Analyze, recreate, align, and verify reference-video motion. Use when the
-  user asks to recreate, copy, match, align, pixel-align, or compare a video
-  against a reference; when a HyperFrames or Remotion remake is judged "not
-  aligned"; when reference motion should be turned into reusable components; or
-  when a video needs frame-by-frame breakdown, side-by-side contact sheets,
-  dense failing-window sampling, repair logs, PSNR/SSIM, hash checks, or a
-  clear pixel-level vs visual-level vs style-level fidelity decision.
+  user asks to recreate, copy, match, align, pixel-align, or compare a video;
+  when a HyperFrames or Remotion remake is judged not aligned; when fixed
+  reference playback and reusable motion components must be separated; or when
+  delivery needs full-frame runtime, render, decode, boundary, timing, and
+  archive evidence instead of sampled screenshots alone.
 ---
 
 # Reference Video Replica QC
 
 ## Role
 
-Make reference-video work evidence-driven and reusable. First classify the
-requested fidelity, then extract frames, describe the source timeline, compare
-the candidate, repair the implementation in small verified passes, and capture
-successful motion patterns as HyperFrames / Remotion components.
+Turn reference-video recreation into a red/green evidence loop and, when useful,
+capture the aligned motion as reusable HyperFrames or Remotion components.
 
-This skill is not only a final QC gate. It is also a replication loop for
-turning real video motion into a component library so future AI-generated videos
-can reuse proven animated patterns instead of defaulting to static slide-like
-layouts.
+Read [replica-levels.md](references/replica-levels.md) before naming or promising
+fidelity. A source-stream copy, an exact lossless render frame, an encoded
+frame-aligned MP4, a visual rebuild, and a style reference are different claims.
 
 ## Canonical Showcase
 
 - Human display name: Presenton 复刻 Bitexact 成片
-- Example finished piece: Presenton replica pixel-aligned bitexact output
 - File: `assets/showcases/presenton-replica-pixel-aligned-bitexact.mp4`
-- Use this as the repository's reference-video replication showcase. It is the
-  correct public example for this skill, replacing older short preview clips.
-
-## Fidelity Levels
-
-Read `references/replica-levels.md` before promising any fidelity level.
-
-- Pixel-level: exact decoded pixels, or exact source stream reuse. Requires hard
-  evidence such as matching SHA-256/`cmp`, PSNR infinity, or SSIM 1.0.
-- Visual-level: hand-authored recreation that matches scene timing, layout,
-  motion, typography, and color closely enough for human review.
-- Style-level: uses the reference as a design language, not as a frame target.
-
-Never describe a HyperFrames/Remotion rebuild as pixel-level unless it passes
-the hard metrics.
+- This showcase demonstrates source-stream bit exactness. Do not use it as proof
+  that a hand-authored HTML composition is bit exact.
 
 ## Operating Modes
 
-- Analysis-only: inspect the reference and/or candidate, write reports, and do
-  not edit implementation code.
-- Replica-loop: keep a persistent objective, compare reference and candidate at
-  the same timestamps, edit the HyperFrames/Remotion/CSS/SVG/timeline code, and
-  re-run evidence until the requested level is met or the remaining mismatch is
-  explicitly documented.
-- Component-capture: after a motion pattern is visually aligned, describe it as
-  a reusable component with purpose, inputs, timing, implementation stack,
-  evidence, and limits.
+- **Analysis-only**: inspect and report; do not edit implementation code.
+- **Replica-loop**: repair the candidate until the declared evidence gate passes.
+- **Component-capture**: register a proven motion pattern with inputs and limits.
 
 ## Workflow
 
-### 1. Establish Inputs
+### 1. Declare The Contract
 
-Collect:
+Record the reference, exact segment, renderer, fidelity label, deliverables,
+component-library destination, and evidence required for approval. Use Goal mode
+when available; otherwise keep `alignment-report.md` and `patch-log.md` beside
+the project.
 
-- reference video path or URL
-- candidate video path, if one exists
-- requested fidelity level
-- sampling interval, default `0.5s`
-- failing-window interval, default `0.1s` when motion is fast or misaligned
-- target implementation stack: HyperFrames, Remotion, or another renderer
-- component-library output path, if reusable motions should be saved
-- output directory for analysis artifacts
+**Complete when:** the segment and every acceptance claim can be tested without
+relying on chat memory.
 
-If the URL is private or expired, use the download skill or browser/source page
-to retrieve a fresh source before analysis.
+### 2. Lock The Timebase
 
-### 2. Set The Persistent Objective
+Probe FPS, duration, start time, pixel format, frame count, and audio presence.
+For exact work, map timestamps to source frame numbers and extract by frame
+index. Inclusive segment count is `(end_frame - start_frame) + 1`. When joining
+adjacent inclusive segments, keep the earlier boundary frame and skip the first
+frame of the next segment.
 
-When the environment has Goal mode, create or reuse a goal that states:
+Use `extract_halfsec_frames.py` for discovery and `extract_frame_range.py` for
+full-frame acceptance sequences.
 
-- the exact reference segment
-- the fidelity level
-- the target renderer
-- the visible components to align
-- the acceptance evidence
+**Complete when:** reference frame 1, final frame, count, and PTS mapping are
+explicit and reproducible.
 
-If Goal mode is unavailable, use `alignment-report.md` and `patch-log.md` as
-the persistent objective. Do not rely on chat memory alone.
+### 3. Choose The Architecture
 
-### 3. Analyze The Reference
+- **Exact replay**: fixed reference content rendered from verified lossless
+  frames or sprite rows. It is not a freely generative component.
+- **Parametric motion**: DOM/SVG/GSAP/React/Three.js with replaceable content.
+- **Hybrid**: ship exact replay for fidelity and keep a separate parametric
+  implementation for later abstraction.
 
-Use `scripts/extract_halfsec_frames.py` or equivalent ffmpeg commands to extract
-frames at fixed timestamps. Start with `0.5s`, then add `0.1s` or explicit
-timestamps around transitions, fast typography, cursor movement, model lists,
-rail/line motion, or any failing window. Create contact sheets. Then write a
-timeline report:
+Never present an exact-replay texture layer as a parameterized AI component.
 
-- timestamp
-- visible text
-- primary subject and position
-- transition state
-- camera/scale movement
-- UI/cursor/button behavior
-- notes about typography, color, glow, grain, or background
+### 4. Analyze And Repair
 
-Do not build from memory. The extracted frames are the source of truth.
+Read [alignment-workflow.md](references/alignment-workflow.md). Start with a
+`0.5s` contact sheet, add `0.1s` windows around fast motion, then repair the
+earliest or largest mismatch one visible cause at a time. Sampling locates
+problems; it does not approve pixel or frame-aligned delivery.
 
-### 4. Compare Candidate To Reference
+For the Presenton failure modes and the dynamic-image decode race, read
+[presenton-lessons.md](references/presenton-lessons.md).
 
-If a candidate exists, use `scripts/compare_videos.py` for hard metrics, then
-create side-by-side contact sheets at the same timestamps.
+**Complete when:** the candidate reaches the declared visual state and no known
+earlier mismatch remains hidden behind a later fix.
 
-Classify every mismatch:
+### 5. Pass Three Evidence Gates
 
-- timing offset
-- scene boundary mismatch
-- subject size or position mismatch
-- missing/extra transition
-- wrong typography or text state
-- wrong background or color system
-- asset mismatch
-- compression/encoding-only difference
+1. **Asset gate**: reference extraction count is exact; generated sprite cells
+   or lossless intermediates round-trip to their source frames with zero error.
+2. **Runtime gate**: the real registered timeline advances sequentially through
+   every required frame. Do not call a test-only setter. Check arbitrary seeks,
+   every dynamic-asset boundary, and previously aligned neighboring segments.
+3. **Delivery gate**: run the renderer, decode the delivered MP4, compare every
+   frame, check temporal candidates, inspect worst and boundary frames, probe
+   media metadata, and verify archive copies by SHA-256.
 
-For hand-authored HyperFrames/Remotion work, also run component-level checks
-instead of relying only on whole-frame metrics:
+For HyperFrames, `npx hyperframes check .` must pass before render. A successful
+render log is not delivery evidence. For Remotion, use the project's equivalent
+runtime and decoded-frame checks.
 
-- object center, size, and rotation
-- text line breaks, font weight, and opacity
-- rail/line path, length, color, and mask timing
-- card/logo/color anchor positions
-- crop-level overlays for the active component
-- adjacent timestamps before and after each fix
+**Complete when:** all three gates are green and the report states which layer
+each metric proves.
 
-### 5. Repair In Small Verified Passes
+### 6. Extend And Join
 
-In replica-loop mode, pick the earliest or largest visible mismatch and make a
-targeted code change. Then regenerate frames for the same timestamps and update
-the evidence before touching the next mismatch.
+When continuing a replica in segments, rerun the previous segment, render the
+new segment independently, skip duplicate inclusive boundary frames, and check
+the frame before, at, and after every join. Then probe the combined frame count
+and duration.
 
-Rules:
+**Complete when:** both old and new ranges pass and no join repeats, drops, or
+rewinds a frame.
 
-- Prefer one visible fix per pass: timing, layout, motion path, scale, color, or
-  asset state.
-- Recheck neighboring timestamps so a local fix does not break the sequence.
-- Treat whole-frame PSNR/SSIM as supporting evidence, not the only truth, when
-  fonts, browser rasterization, and generated assets differ.
-- For HyperFrames, run `lint`, `validate`, and `inspect` before final render.
-- For Remotion, run the equivalent render/screenshot validation used by the
-  project.
-- Do not say "aligned" until the report points to the passing evidence.
+### 7. Capture Components
 
-### 6. Capture Reusable Components
+Register exact replay and parametric motion separately. Each entry includes:
 
-When a motion pattern is aligned well enough to reuse, write a component entry.
-Each component entry should include:
+- type: `exact-replay` or `parametric-motion`
+- source and timestamp range
+- intended content pattern
+- inputs and timing contract
+- implementation stack and assets
+- evidence files and acceptance level
+- known limits
 
-- component name and short description
-- source reference and timestamp range
-- when to use it in an AI-generated video
-- input props or parameters
-- timing contract and important easing/state changes
-- implementation stack: HyperFrames, Remotion, React, CSS, SVG, GSAP, assets
-- visual acceptance evidence: contact sheet, crop, overlay, or metrics
-- known limits and what should not be promised
+### 8. Decide
 
-The goal is a growing library of proven video-language building blocks: title
-openers, model switch lists, vertical rails, floating cards, product panels,
-code reveals, CTA transitions, captions, and diagram motions.
-
-### 7. Decide
-
-Approve only if the candidate meets the requested level:
-
-- Pixel-level: hard metrics pass.
-- Visual-level: side-by-side frames align at the declared interval, with only
-  accepted differences.
-- Style-level: the style principles are present; exact timing is optional.
-
-If it fails, produce a repair list ordered by timestamp. Say "not aligned" and
-name the first failing timestamp.
+Approve only the fidelity label proved by current evidence. If a gate is red,
+say `not aligned`, name the first failing frame or timestamp, and continue the
+replica loop.
 
 ## Script Usage
 
 ```bash
-python3 scripts/extract_halfsec_frames.py reference.mp4 --out analysis/reference
-python3 scripts/extract_halfsec_frames.py reference.mp4 --out analysis/reference-dense --interval 0.1 --start 18 --end 21 --contact
-python3 scripts/compare_videos.py reference.mp4 candidate.mp4 --out analysis/compare
+# Discovery samples and contact sheets
+python3 scripts/extract_halfsec_frames.py reference.mp4 --out analysis/sample --contact
+
+# Exact inclusive frame range
+python3 scripts/extract_frame_range.py reference.mp4 --start-frame 720 --end-frame 1020 --out analysis/reference-fullfps
+
+# Lossless sprite rows and round-trip proof
+python3 scripts/build_frame_sprite_rows.py analysis/reference-fullfps assets/textures --prefix replica-row --frames-per-row 7
+python3 scripts/verify_frame_sprite_rows.py analysis/reference-fullfps assets/textures --prefix replica-row --frames-per-row 7
+
+# Real timeline capture, followed by full-frame comparison
+node scripts/verify_timeline_playback.cjs --html ./index.html --timeline-id composition_id --start 24 --frames 301 --fps 30 --out analysis/runtime
+python3 scripts/verify_frame_sequence.py analysis/reference-fullfps analysis/runtime --output analysis/runtime-metrics.json --boundary-every 7
+
+# Delivered video comparison and decoded-frame gate
+python3 scripts/compare_videos.py reference.mp4 candidate.mp4 --out analysis/delivery --reference-start-frame 720 --candidate-start-frame 0 --frame-count 301 --boundary-every 7
 ```
 
-Use the workspace Python from `load_workspace_dependencies` when Pillow is
-needed for labeled contact sheets.
+Use a Python runtime with Pillow for frame and sprite verification. Timeline
+capture requires Playwright in the Node runtime.
 
-## Outputs
+## Required Outputs
 
-Keep these artifacts near the video project:
-
-- `alignment-report.md`
-- `patch-log.md`
-- reusable component entries or `component-catalog.md`
-- source contact sheets
-- side-by-side contact sheets
-- crop/overlay evidence for active components
-- `comparison-report.md`
-- PSNR/SSIM logs when comparing videos
+- `alignment-report.md` and `patch-log.md`
+- source and candidate contact sheets
+- full-frame runtime and delivery metrics JSON
+- worst-frame and boundary-frame evidence
+- side-by-side comparison video or sheet
+- media probe and checksum evidence
+- component catalog entry when requested
 - final pass/fail summary
 
-For content-creation projects, copy the final QC artifacts into the desktop
-archive `质检/` folder.
+For content-creation projects, copy final videos into `成片/` and the compact QC
+evidence into the sibling `质检/` directory.

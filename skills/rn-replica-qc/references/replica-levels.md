@@ -1,44 +1,71 @@
 # Replica Fidelity Levels
 
-## Pixel-level
+Name only the level proved by current evidence.
 
-Use only when the user explicitly asks for pixel-perfect, pixel-level, exact,
-bit-exact, or frame-identical output.
+## 1. Source Bit Exact
 
-Acceptance evidence:
-
-- matching file hash and `cmp`, when the output is a source-stream copy
-- PSNR `average:inf`
-- SSIM `All:1.000000`
-- same resolution, frame rate, duration, and media start
-
-Hand-authored HTML/Remotion/HyperFrames renders usually cannot meet this level
-because browser font rasterization, anti-aliasing, easing curves, missing source
-assets, and encoder differences alter pixels.
-
-## Visual-level
-
-Use for "复刻", "做一个一样的", "对齐这个视频" when exact source files are not
-available. Acceptance is side-by-side visual review at a declared sampling
-interval, usually `0.5s` for fast motion and `1.0s` for slower videos.
+Use when the output reuses or remuxes the source stream without changing decoded
+content.
 
 Required evidence:
 
-- reference timeline report
-- candidate comparison report
-- side-by-side contact sheets
-- a timestamped mismatch list or a clear pass statement
+- matching SHA-256 and `cmp`, when byte identity is promised
+- or decoded PSNR infinity and SSIM 1.0 when container bytes may differ
+- matching resolution, FPS, duration, frame count, media start, and pixel format
 
-## Style-level
+This does not prove a hand-authored animation was reconstructed.
 
-Use when the user wants "这种风格", "参考这个感觉", "做同款风格" rather than the
-same shots. Extract style rules, not exact frame targets:
+## 2. Render-Frame Exact
 
-- palette and background treatment
-- typography behavior
-- motion grammar
-- scene rhythm
-- UI/component motifs
-- transition vocabulary
+Use when the renderer's lossless frames match the target frames exactly, but the
+delivery codec changes bytes or decoded colors.
 
-Do not require frame-by-frame timing unless the user asks for a remake.
+Required evidence:
+
+- exact reference frame range and count
+- every lossless candidate frame compared
+- zero changed pixels, MAE 0, and maximum channel delta 0
+- real runtime timeline capture, not a test-only state setter
+
+State explicitly that the claim applies before lossy encoding.
+
+## 3. Encoded Frame Aligned
+
+Use when every decoded delivery frame has the correct temporal identity and only
+codec-level pixel error remains.
+
+Required evidence:
+
+- same FPS, frame count, duration, dimensions, and media start
+- per-frame metrics, worst frames, and dynamic-asset boundary metrics
+- zero significant temporal mismatches against nearby reference frames
+- preferably a control encode of the reference with identical codec settings
+
+Use the control encode plus a declared margin. Without a control, the project
+fallback is maximum frame MAE `2.5`, maximum boundary MAE `2.5`, and temporal
+lead `0.1`; report these as project thresholds, not universal truths.
+
+## 4. Visual Aligned
+
+Use for a hand-authored recreation that matches timing, layout, motion,
+typography, and color closely enough for human review.
+
+Required evidence:
+
+- reference timeline and candidate comparison reports
+- side-by-side contact sheets at a declared interval
+- dense checks around transitions and the first failing window
+- accepted differences listed explicitly
+
+## 5. Style Aligned
+
+Use when the reference supplies a design language rather than exact shots.
+Capture palette, background treatment, typography, motion grammar, rhythm,
+component motifs, and transition vocabulary. Exact frame timing is not required.
+
+## Promise Rules
+
+- `pixel perfect` alone is ambiguous; resolve it to one of levels 1-3.
+- Do not call an H.264 delivery bit exact because its pre-encode PNGs were exact.
+- Do not call sampled screenshots frame aligned.
+- Do not call an exact-replay texture layer a parameterized motion component.

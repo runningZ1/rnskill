@@ -10,6 +10,7 @@ group_for() {
   case "$1" in
     rn-renhua)              echo "01-writing" ;;
     rn-motion-director)     echo "02-video-production" ;;
+    rn-motion-replica)      echo "02-video-production" ;;
     rn-dark-saas-video)     echo "02-video-production" ;;
     rn-bw-text-opener)      echo "02-video-production" ;;
     rn-replica-qc)          echo "03-quality-control" ;;

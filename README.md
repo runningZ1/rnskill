@@ -4,6 +4,8 @@
 
 AI Agent Skills maintained by 雪踏乌云 for Codex, Claude Code, and other Agent workflows that support `SKILL.md`.
 
+The collection covers Chinese writing, motion direction, original reference-motion studies, style-specific video production, openers, and evidence-based replica QA.
+
 ## Requirements
 
 - Codex, Claude Code, or another Agent that supports project-level skills.
@@ -38,10 +40,12 @@ Copy only the skill you need into your project:
 # Codex
 mkdir -p <project>/.agents/skills
 cp -R skills/rn-renhua <project>/.agents/skills/rn-renhua
+cp -R skills/rn-motion-replica <project>/.agents/skills/rn-motion-replica
 
 # Claude Code
 mkdir -p <project>/.claude/skills
 cp -R skills/rn-renhua <project>/.claude/skills/rn-renhua
+cp -R skills/rn-motion-replica <project>/.claude/skills/rn-motion-replica
 ```
 
 ## Available Skills
@@ -57,6 +61,7 @@ cp -R skills/rn-renhua <project>/.claude/skills/rn-renhua
 | Skill | Description |
 |-------|-------------|
 | [`rn-motion-director`](skills/rn-motion-director/) | Motion-first AI video director. Turns topics into motion video concepts with visual metaphors, beat graphs, and anti-PPT QC. |
+| [`rn-motion-replica`](skills/rn-motion-replica/) | Builds an original, editable HyperFrames motion study from an authorized reference range, with analysis evidence and final-MP4 QC. |
 | [`rn-dark-saas-video`](skills/rn-dark-saas-video/) | Dark cinematic SaaS product video in "magic UI" style. 8 scene blueprints, 3 timing presets, hard style rules. |
 | [`rn-bw-text-opener`](skills/rn-bw-text-opener/) | Black-white typed text opener animation with synced typing SFX. 3 timing presets. Includes a Python timing plan generator. |
 
@@ -64,7 +69,7 @@ cp -R skills/rn-renhua <project>/.claude/skills/rn-renhua
 
 | Skill | Description |
 |-------|-------------|
-| [`rn-replica-qc`](skills/rn-replica-qc/) | Reference video replica QC. Three fidelity levels (pixel/visual/style), frame comparison, PSNR/SSIM, reusable component capture. |
+| [`rn-replica-qc`](skills/rn-replica-qc/) | SOP v2 replica QA. Five fidelity levels plus asset, runtime, and delivery full-frame gates; exact replay and parametric motion are registered separately. |
 
 ## Directory Structure
 
@@ -73,6 +78,7 @@ rnskill/
 ├── skills/
 │   ├── rn-renhua/              # Writing: de-AI editor
 │   ├── rn-motion-director/     # Video: motion director
+│   ├── rn-motion-replica/      # Video: original editable motion study
 │   ├── rn-dark-saas-video/     # Video: dark SaaS style
 │   ├── rn-bw-text-opener/      # Video: typed text opener
 │   └── rn-replica-qc/          # QC: reference video replica
@@ -81,6 +87,15 @@ rnskill/
 ├── tools/                      # Build and packaging scripts
 ├── .claude-plugin/             # Claude Code marketplace manifest
 └── .github/workflows/          # Release automation
+```
+
+## Maintainer Sync
+
+The four mirrored video skills are developed in `Pluviobyte/video-production-skills`. Refresh them without touching repository-native skills such as `rn-renhua` and `rn-motion-replica`:
+
+```bash
+python3 tools/sync-video-skills.py --source /path/to/video-production-skills
+python3 tools/sync-video-skills.py --source /path/to/video-production-skills --check
 ```
 
 ## License

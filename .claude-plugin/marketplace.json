@@ -1,8 +1,8 @@
 {
   "name": "rnskill",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "owner": "Pluviobyte",
-  "description": "雪踏乌云的 AI Agent Skills 集合 — 写作精修 + 视频制作 + 视频质检",
+  "description": "雪踏乌云的 AI Agent Skills 集合 — 写作精修 + 动效制作 + 参考复刻 + 全帧质检",
   "repository": "https://github.com/Pluviobyte/rnskill",
   "license": "CC-BY-NC-4.0",
   "plugins": [
@@ -27,11 +27,21 @@
       "skills": ["./skills/rn-motion-director"]
     },
     {
-      "name": "rn-replica-qc",
-      "description": "参考视频复刻闭环质检。三级保真度 + 帧对比 + PSNR/SSIM + 运动组件沉淀。\nReference video replica QC. Three fidelity levels, frame comparison, component capture.\nTrigger: /rn-replica-qc, 复刻这个视频, 对齐参考视频",
+      "name": "rn-motion-replica",
+      "description": "把获授权的参考片段拆成视觉证据，并制作成原创、可编辑、可验证的 HyperFrames 动效工程。\nOriginal editable motion study from an authorized reference range, with analysis evidence and final-MP4 QC.\nTrigger: /rn-motion-replica, 参考这个视频做同款动效, 复刻前N秒方框连线动画",
       "source": "./",
       "strict": false,
       "version": "1.0.0",
+      "category": "video-production",
+      "keywords": ["参考视频", "动效复刻", "HyperFrames", "motion", "replica", "editable"],
+      "skills": ["./skills/rn-motion-replica"]
+    },
+    {
+      "name": "rn-replica-qc",
+      "description": "参考视频复刻 SOP v2。五级保真度 + 素材/运行时/交付三道全帧门 + 精确重放与参数化组件分离。\nReference replica SOP v2 with five fidelity levels and asset/runtime/delivery frame gates.\nTrigger: /rn-replica-qc, 复刻这个视频, 对齐参考视频, 逐帧像素验证",
+      "source": "./",
+      "strict": false,
+      "version": "1.1.0",
       "category": "quality-control",
       "keywords": ["质检", "复刻", "QC", "PSNR", "SSIM", "replica", "alignment"],
       "skills": ["./skills/rn-replica-qc"]

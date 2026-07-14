@@ -1,93 +1,129 @@
 # Alignment Workflow
 
-## Persistent Replica Loop
+## Contract And Timebase
 
-Use a persistent objective for active recreation. If the agent runtime supports
-Goal mode, create a goal for the exact reference segment, fidelity level, target
-renderer, and acceptance evidence. If it does not, keep the same state in
-`alignment-report.md` plus `patch-log.md`.
+Before editing, record:
 
-The loop is:
+- reference and candidate paths
+- source and candidate FPS, start time, dimensions, pixel format, and frame count
+- inclusive source start and end frame
+- expected frame count
+- fidelity level and thresholds
+- renderer and final output paths
 
-1. Extract reference frames.
-2. Generate candidate frames at the same timestamps.
-3. Compare full frame and active-component crops.
-4. Name the earliest or largest visible mismatch.
-5. Patch one small part of the implementation.
-6. Regenerate the same frames.
-7. Update evidence and repeat.
+For exact ranges, extract with an ffmpeg `select=between(n,start,end)` filter or
+`extract_frame_range.py`. Timestamp seeking is useful for discovery but can land
+on a neighboring decoded frame.
 
-Do not mark a segment aligned because one frame improved. Recheck the adjacent
-timestamps and the full motion window.
+## Locate With Samples, Approve With Frames
 
-## Reference Breakdown
+Use `0.5s` samples to understand the whole piece. Use `0.1s` or explicit times
+around fast typography, cursors, rails, list switching, scene cuts, or a failing
+window. Describe text, subject geometry, background, transition, interaction,
+and scene-boundary state.
 
-Use a fixed timestamp grid. For videos under 60 seconds, default to `0.5s`.
-For high-speed typography or cursor movement, add finer samples around failing
-moments. Use `0.1s` or explicit timestamps for dense windows around transitions,
-model switchers, vertical rails, logo/color changes, or fast layout movement.
+Sampling finds repair targets. Render-frame-exact and encoded-frame-aligned
+approval require every frame in the declared range.
 
-Describe each timestamp with:
+## Repair Loop
 
-- text state
-- subject position and size
-- background state
-- active transition
-- visible cursor or interaction
-- scene boundary status
+1. Generate candidate frames at the same source identities.
+2. Compare the full frame and active-component crops.
+3. Name the earliest or largest mismatch.
+4. Patch one visible cause: timing, geometry, asset, animation, or encoding.
+5. Regenerate the same window and adjacent frames.
+6. Rerun the full required range before approval.
 
-## Candidate Comparison
+Do not let a later visually impressive frame hide an earlier red frame.
 
-Use the same timestamp grid. Put reference on the left and candidate on the
-right. Start the report with the earliest failing timestamp. For complex
-motions, also create local crops and overlays for the active component so the
-repair target is measurable.
+## Architecture Decision
 
-Common failure classes:
+### Exact Replay
 
-- global offset: every scene is late or early
-- drift: early scenes align, later scenes do not
-- wrong scale: subject is too small or too large
-- wrong background: persistent effects that should not exist
-- wrong transition: missing flash, wipe, blur, or speed-ramp
-- wrong semantic state: text says the right words but at the wrong phase
-- accidental artifacts: blank frames, solid-color flashes, missing assets
+Use verified lossless frames or sprite rows when fixed content must be exact.
+If sprite rows change dynamically:
 
-Component-level checks:
+- verify every cell round-trips to its source frame
+- preload the next row while the current row is visible
+- use at least two alternating buffers
+- inspect the first frame of every row
+- keep a standalone composition for direct segment rendering
 
-- center, width, height, scale, and rotation
-- line/rail path, endpoint, length, mask, and opacity
-- text line breaks, font size, weight, opacity, and timing
-- logo or provider-color anchors
-- card stacking order, shadow, blur, and clipping
-- camera/container translation, zoom, and crop
+Changing `background-image` on the frame being captured is a decode race, even
+when the render command succeeds.
 
-## Repair Handoff
+### Parametric Motion
 
-For each failing segment, provide:
+Use semantic DOM/SVG/React/Three.js when text, logos, counts, or timing must be
+generated from content. Verify component geometry and neighboring timestamps.
 
-- timestamp range
-- what the reference shows
-- what the candidate shows
-- required change
-- whether the fix is timing, layout, asset, animation, or encoding
+### Hybrid
 
-Do not say "adjust animation" without naming the timestamp and visible target.
+Keep exact replay and parametric motion as separate deliverables. Exact replay
+proves a reference; parametric motion serves future AI-generated content.
+
+## Three Evidence Gates
+
+### Asset Gate
+
+- reference first and final frame identities are correct
+- extracted count equals `(end_frame - start_frame) + 1`
+- lossless intermediate or sprite round-trip is zero error
+- no blank, missing, or stale asset frame exists
+
+### Runtime Gate
+
+- drive the registered production timeline sequentially
+- do not invoke a test-only helper that bypasses production updates
+- capture every required frame immediately after the production time update
+- sample arbitrary seeks separately
+- test every scene cut and dynamic-asset boundary
+- rerun previously aligned adjacent ranges after integration
+
+### Delivery Gate
+
+- run renderer validation before render
+- render a standalone segment when possible
+- decode the delivered file back to a lossless frame sequence
+- compare every frame and nearby temporal candidates
+- report average and maximum error, worst frames, boundary maximum, and temporal mismatches
+- probe dimensions, FPS, duration, frame count, pixel format, and audio
+- compare working and archive copies by SHA-256
+
+A green renderer log proves that encoding finished, not that the right pixels
+were encoded.
+
+## Codec Baseline
+
+For lossy delivery, encode the reference frame sequence with the same codec,
+CRF, pixel format, FPS, and dimensions. Compare both the control and candidate
+against the lossless reference. Approve candidate error relative to that control.
+When no control is available, declare the fallback thresholds used.
+
+## Segment Extension And Joins
+
+For adjacent inclusive segments:
+
+1. keep the previous segment's final boundary frame
+2. skip the new segment's duplicate first frame
+3. check the frame before, at, and after the join
+4. verify combined frame count and duration
+5. rerun both segment regressions
 
 ## Component Capture
 
-When a repaired motion becomes reusable, write a component entry. The entry
-should be short but complete:
+Each catalog entry records `exact-replay` or `parametric-motion`, source range,
+content pattern, inputs, timing contract, stack, evidence, and limits. Never let
+the catalog imply that fixed reference pixels accept arbitrary content.
 
-- name
-- source video and timestamp range
-- what content pattern it serves
-- visual behavior
-- input parameters
-- implementation stack
-- timing contract
-- evidence files
-- limits
+## Completion Report
 
-This turns one-off reference recreation into a growing HyperFrames/Remotion
-component library for future AI video generation.
+State separately:
+
+- what the asset gate proved
+- what production runtime proved
+- what decoded delivery proved
+- what codec error remains
+- what previous range was regressed
+- what join frames were checked
+- where final and QC files were archived
