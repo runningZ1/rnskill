@@ -4,7 +4,7 @@
 
 雪踏乌云维护的 AI Agent Skills 集合，适用于 Codex、Claude Code 等支持 `SKILL.md` 的 Agent 工作流。
 
-当前覆盖中文写作、动效导演、原创参考动效复刻、风格化视频、片头包装和带逐帧证据的复刻质检。
+当前覆盖中文写作、内容提取、动效导演、原创参考动效复刻、风格化视频、片头包装和带逐帧证据的复刻质检。
 
 ## 前置要求
 
@@ -56,6 +56,12 @@ cp -R skills/rn-motion-replica <project>/.claude/skills/rn-motion-replica
 |-------|------|
 | [`rn-renhua`](skills/rn-renhua/) | 中文 AI/技术写作去 AI 味精修。去除二元对比壳、伪洞察标记、冒号讲义腔等 AI 写作模式，保留作者判断和具体事实。 |
 
+### 内容提取
+
+| Skill | 说明 |
+|-------|------|
+| [`rn-wechat-extract`](skills/rn-wechat-extract/) | 微信公众号文章全文提取。通过 MicroMessenger UA 伪装绕过微信访问控制，纯标准库，无需 API key。 |
+
 ### 视频制作
 
 | Skill | 说明 |
@@ -77,6 +83,7 @@ cp -R skills/rn-motion-replica <project>/.claude/skills/rn-motion-replica
 rnskill/
 ├── skills/
 │   ├── rn-renhua/              # 写作：去 AI 味精修
+│   ├── rn-wechat-extract/      # 提取：微信公众号文章
 │   ├── rn-motion-director/     # 视频：动效导演
 │   ├── rn-motion-replica/      # 视频：原创可编辑动效复刻
 │   ├── rn-dark-saas-video/     # 视频：暗色 SaaS 风格

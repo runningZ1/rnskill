@@ -4,7 +4,7 @@
 
 AI Agent Skills maintained by 雪踏乌云 for Codex, Claude Code, and other Agent workflows that support `SKILL.md`.
 
-The collection covers Chinese writing, motion direction, original reference-motion studies, style-specific video production, openers, and evidence-based replica QA.
+The collection covers Chinese writing, content extraction, motion direction, original reference-motion studies, style-specific video production, openers, and evidence-based replica QA.
 
 ## Requirements
 
@@ -56,6 +56,12 @@ cp -R skills/rn-motion-replica <project>/.claude/skills/rn-motion-replica
 |-------|-------------|
 | [`rn-renhua`](skills/rn-renhua/) | Chinese AI/tech writing de-AI editor. Removes AI-flavored patterns while preserving author voice, facts, and judgment. |
 
+### Content Extraction
+
+| Skill | Description |
+|-------|-------------|
+| [`rn-wechat-extract`](skills/rn-wechat-extract/) | Extract full text from WeChat public account articles via MicroMessenger UA spoofing. Stdlib only, no API key. |
+
 ### Video Production
 
 | Skill | Description |
@@ -77,6 +83,7 @@ cp -R skills/rn-motion-replica <project>/.claude/skills/rn-motion-replica
 rnskill/
 ├── skills/
 │   ├── rn-renhua/              # Writing: de-AI editor
+│   ├── rn-wechat-extract/      # Extraction: WeChat article reader
 │   ├── rn-motion-director/     # Video: motion director
 │   ├── rn-motion-replica/      # Video: original editable motion study
 │   ├── rn-dark-saas-video/     # Video: dark SaaS style
