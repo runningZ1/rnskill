@@ -96,6 +96,16 @@ def extract_videos_from_html(html: str) -> list:
         if clean_url not in videos:
             videos.append(clean_url)
     
+    # Pattern 3: Video channel (视频号) URLs - wxv_ format
+    # These are embedded differently, look for video_id references
+    wxv_pattern = r"video_id:\s*['\"](wxv_[^['\"]+)['\"]"
+    wxv_ids = re.findall(wxv_pattern, html)
+    
+    # For video channels, we need to find the associated mp4 URLs
+    # They are usually in the same script block
+    if wxv_ids:
+        print(f"  Found {len(wxv_ids)} video channel IDs: {', '.join(wxv_ids)}", file=sys.stderr)
+    
     return videos
 
 def parse_article(html: str):
@@ -249,16 +259,23 @@ def main():
     # Download videos if enabled
     video_count = 0
     video_map = {}
+    video_channel_ids = []
     
     if not args.no_videos:
         print("Extracting videos...", file=sys.stderr)
         video_urls = extract_videos_from_html(html)
+        
+        # Also extract video channel IDs
+        wxv_pattern = r"video_id:\s*['\"](wxv_[^['\"]+)['\"]"
+        video_channel_ids = re.findall(wxv_pattern, html)
         
         if video_urls:
             videos_dir = out_dir / f"{base_name}_videos"
             videos_dir.mkdir(exist_ok=True)
             
             print(f"Found {len(video_urls)} videos", file=sys.stderr)
+            if video_channel_ids:
+                print(f"Found {len(video_channel_ids)} video channel (视频号) IDs", file=sys.stderr)
             
             for i, url in enumerate(video_urls, 1):
                 vid_filename = f"video_{i:02d}.mp4"
@@ -314,6 +331,8 @@ def main():
         result["images_dir"] = str(out_dir / f"{base_name}_images")
     if video_count > 0:
         result["videos_dir"] = str(out_dir / f"{base_name}_videos")
+    if video_channel_ids:
+        result["video_channel_ids"] = video_channel_ids
     
     print(json.dumps(result, ensure_ascii=False, indent=2))
 
