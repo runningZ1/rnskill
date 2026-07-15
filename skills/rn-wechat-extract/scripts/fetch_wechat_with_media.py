@@ -96,15 +96,35 @@ def extract_videos_from_html(html: str) -> list:
         if clean_url not in videos:
             videos.append(clean_url)
     
-    # Pattern 3: Video channel (视频号) URLs - wxv_ format
-    # These are embedded differently, look for video_id references
+    # Pattern 3: Video channel (视频号) IDs - wxv_ format
     wxv_pattern = r"video_id:\s*['\"](wxv_[^['\"]+)['\"]"
     wxv_ids = re.findall(wxv_pattern, html)
     
-    # For video channels, we need to find the associated mp4 URLs
-    # They are usually in the same script block
+    # Pattern 4: Video snap card format (video_snap_card)
+    # This is another way to embed video channels
+    snap_card_pattern = r"video_snap_card:\s*['\"]([^['\"]+)['\"]"
+    snap_cards = re.findall(snap_card_pattern, html)
+    
+    # Pattern 5: Finder username format
+    finder_pattern = r"username\\x22:\\x22([^@]+@finder)\\x22"
+    finder_usernames = re.findall(finder_pattern, html)
+    
+    # Pattern 6: Export ID format
+    export_pattern = r"export_id\\x22:\\x22([^\\x22]+)\\x22"
+    export_ids = re.findall(export_pattern, html)
+    
+    # Pattern 7: Finder video URL (findermp.video.qq.com)
+    finder_video_pattern = r"findermp\.video\.qq\.com[^\"]*"
+    finder_video_urls = re.findall(finder_video_pattern, html)
+    
     if wxv_ids:
-        print(f"  Found {len(wxv_ids)} video channel IDs: {', '.join(wxv_ids)}", file=sys.stderr)
+        print(f"  Found {len(wxv_ids)} video channel IDs (wxv_): {', '.join(wxv_ids)}", file=sys.stderr)
+    if finder_usernames:
+        print(f"  Found {len(finder_usernames)} video channel usernames (finder)", file=sys.stderr)
+    if export_ids:
+        print(f"  Found {len(export_ids)} video channel export IDs", file=sys.stderr)
+    if finder_video_urls:
+        print(f"  Found {len(finder_video_urls)} finder video URLs (may be expired)", file=sys.stderr)
     
     return videos
 
