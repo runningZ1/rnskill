@@ -18,10 +18,16 @@ This skill sends HTTP requests with a genuine WeChat iOS WebView User-Agent and 
 **Extracts:** title, author, publish time, and body text as Markdown.
 
 **Limitations:**
-- Images are not downloaded (WeChat uses lazy-loaded `data-src`)
 - Some heavily JS-rendered articles may return partial content
 - Rapid successive calls from the same IP may trigger CAPTCHA (wait and retry)
 - Does not work on login-gated or paid articles
+
+**Enhanced Versions:**
+- `fetch_wechat_with_images.py` - Downloads images only
+- `fetch_wechat_with_media.py` - Downloads both images and videos
+- Images saved to `{title}_images/` directory
+- Videos saved to `{title}_videos/` directory
+- Markdown references updated to local paths
 
 ## Locate The Skill
 
@@ -76,6 +82,8 @@ export WX_HOME
 
 ## Command Reference
 
+### Basic Version (text only)
+
 ```
 fetch_wechat.py <url> [options]
 
@@ -86,6 +94,52 @@ Options:
   --output-dir <dir>     Output directory (default: current directory)
   --raw                  Also save the raw HTML alongside the Markdown
   --doctor               Check dependencies and exit
+```
+
+### Enhanced Version (images only)
+
+```
+fetch_wechat_with_images.py <url> [options]
+
+Arguments:
+  url                    mp.weixin.qq.com article URL
+
+Options:
+  --output-dir <dir>     Output directory (default: current directory)
+  --no-images            Skip image download
+  --raw                  Also save the raw HTML alongside the Markdown
+  --doctor               Check dependencies and exit
+```
+
+### Enhanced Version (images + videos)
+
+```
+fetch_wechat_with_media.py <url> [options]
+
+Arguments:
+  url                    mp.weixin.qq.com article URL
+
+Options:
+  --output-dir <dir>     Output directory (default: current directory)
+  --no-images            Skip image download
+  --no-videos            Skip video download
+  --raw                  Also save the raw HTML alongside the Markdown
+  --doctor               Check dependencies and exit
+```
+
+**Output structure (with media):**
+```
+output/
+├── 2026-07-15-article-title.md
+├── 2026-07-15-article-title.raw.html  (if --raw)
+├── 2026-07-15-article-title_images/
+│   ├── image_01.jpg
+│   ├── image_02.jpg
+│   └── ...
+└── 2026-07-15-article-title_videos/
+    ├── video_01.mp4
+    ├── video_02.mp4
+    └── ...
 ```
 
 No external dependencies — Python stdlib only (`urllib`, `re`, `html`, `json`).
@@ -100,3 +154,39 @@ This skill provides text for any downstream content workflow:
 | Save article as topic idea | rn-wechat-extract → topic management |
 | Read and discuss an article | rn-wechat-extract (standalone) |
 | Turn article into image cards | rn-wechat-extract → content adaptation |
+| Extract article with images | rn-wechat-extract (with_images) |
+| Extract article with full media | rn-wechat-extract (with_media) |
+
+## Enhanced Versions
+
+| Version | Images | Videos | Use Case |
+|---------|--------|--------|----------|
+| Original | ❌ | ❌ | Text-only extraction |
+| with_images | ✅ | ❌ | Articles with important images |
+| with_media | ✅ | ✅ | Articles with videos |
+
+### Usage Examples
+
+```bash
+# Text only (original)
+python3 "$WX_HOME/scripts/fetch_wechat.py" "<url>" --output-dir "./output"
+
+# With images
+python3 "$WX_HOME/scripts/fetch_wechat_with_images.py" "<url>" --output-dir "./output"
+
+# With images and videos
+python3 "$WX_HOME/scripts/fetch_wechat_with_media.py" "<url>" --output-dir "./output"
+```
+
+### Technical Details
+
+**Images:**
+- WeChat uses lazy-loaded `data-src` attributes
+- Script extracts URLs and downloads with WeChat headers
+- Images saved to `{title}_images/` directory
+
+**Videos:**
+- Videos hosted on `mpvideo.qpic.cn`
+- Script extracts MP4 URLs from JavaScript
+- Videos saved to `{title}_videos/` directory
+- Some videos may require authentication (403 errors)
