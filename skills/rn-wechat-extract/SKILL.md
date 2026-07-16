@@ -24,7 +24,8 @@ This skill sends HTTP requests with a genuine WeChat iOS WebView User-Agent and 
 
 **Enhanced Versions:**
 - `fetch_wechat_with_images.py` - Downloads images only
-- `fetch_wechat_with_media.py` - Downloads both images and videos
+- `fetch_wechat_with_media.py` - Downloads both images and directly-embedded videos
+- `fetch_wechat_with_channels.py` - Also downloads WeChat Channels (视频号) videos embedded in the article, via an optional [TikHub](https://tikhub.io) API key
 - Images saved to `{title}_images/` directory
 - Videos saved to `{title}_videos/` directory
 - Markdown references updated to local paths
@@ -142,6 +143,37 @@ output/
     └── ...
 ```
 
+### Enhanced Version (images + videos + video channels / 视频号)
+
+```
+fetch_wechat_with_channels.py <url> [options]
+
+Arguments:
+  url                     mp.weixin.qq.com article URL
+
+Options:
+  --output-dir <dir>      Output directory (default: current directory)
+  --tikhub-key <key>      TikHub API key for resolving 视频号 videos. Falls back to TIKHUB_API_KEY env var.
+  --no-channel-videos     Detect but skip downloading 视频号 videos
+  --raw                   Also save the raw HTML alongside the Markdown
+  --doctor                Check dependencies and exit
+```
+
+Without `--tikhub-key` / `TIKHUB_API_KEY`, video channel videos are still detected and reported (their `export_id` / `object_nonce_id`) but not downloaded — everything else (text, images, direct videos) still works.
+
+**Output structure (with channels):**
+```
+output/
+├── 2026-07-15-article-title.md
+├── 2026-07-15-article-title.raw.html  (if --raw)
+├── 2026-07-15-article-title_images/
+│   ├── image_01.jpg
+│   └── ...
+└── 2026-07-15-article-title_videos/
+    ├── video_01.mp4       # direct mpvideo.qpic.cn videos
+    └── channel_01.mp4     # 视频号 videos resolved via TikHub + worker
+```
+
 No external dependencies — Python stdlib only (`urllib`, `re`, `html`, `json`).
 
 ## Integration Examples
@@ -156,14 +188,16 @@ This skill provides text for any downstream content workflow:
 | Turn article into image cards | rn-wechat-extract → content adaptation |
 | Extract article with images | rn-wechat-extract (with_images) |
 | Extract article with full media | rn-wechat-extract (with_media) |
+| Extract article including 视频号 videos | rn-wechat-extract (with_channels) |
 
 ## Enhanced Versions
 
-| Version | Images | Videos | Use Case |
-|---------|--------|--------|----------|
-| Original | ❌ | ❌ | Text-only extraction |
-| with_images | ✅ | ❌ | Articles with important images |
-| with_media | ✅ | ✅ | Articles with videos |
+| Version | Images | Direct Videos | 视频号 Videos | Use Case |
+|---------|--------|----------------|----------------|----------|
+| Original | ❌ | ❌ | ❌ | Text-only extraction |
+| with_images | ✅ | ❌ | ❌ | Articles with important images |
+| with_media | ✅ | ✅ | ❌ | Articles with native videos |
+| with_channels | ✅ | ✅ | ✅ (requires TikHub key) | Articles embedding WeChat Channels videos |
 
 ### Usage Examples
 
@@ -176,6 +210,10 @@ python3 "$WX_HOME/scripts/fetch_wechat_with_images.py" "<url>" --output-dir "./o
 
 # With images and videos
 python3 "$WX_HOME/scripts/fetch_wechat_with_media.py" "<url>" --output-dir "./output"
+
+# With images, videos, and video channel (视频号) videos
+python3 "$WX_HOME/scripts/fetch_wechat_with_channels.py" "<url>" \
+  --output-dir "./output" --tikhub-key "$TIKHUB_API_KEY"
 ```
 
 ### Technical Details
@@ -189,4 +227,16 @@ python3 "$WX_HOME/scripts/fetch_wechat_with_media.py" "<url>" --output-dir "./ou
 - Videos hosted on `mpvideo.qpic.cn`
 - Script extracts MP4 URLs from JavaScript
 - Videos saved to `{title}_videos/` directory
-- Some videos may require authentication (403 errors)
+- Some videos may require authentication (403 errors) — the article's video URLs carry a short-lived token, so download can fail if the HTML is stale; re-scrape close to download time
+
+**Video Channel (视频号) Videos:**
+
+The article HTML has no directly playable URL for a 视频号-embedded video, only opaque identifiers. Resolving one to a downloadable file takes 3 network hops:
+
+1. Extract `export_id` (`data-id="export/..."`) and `object_nonce_id` (`data-nonceid`) from the article's `<mp-common-videosnap>` embed tag — or use a direct `weixin.qq.com/sph/...` share link if the article already has one.
+2. TikHub `fetch_video_detail` (export_id + object_nonce_id) → resolve the real numeric `object_id`. Note `object_nonce_id` alone is *not* the object_id — a common mix-up since both are numeric strings.
+3. TikHub `fetch_video_share_url` (object_id) → a `weixin.qq.com/sph/xxx` share link.
+4. Community worker `sph.litao.workers.dev/api/fetch_video_profile` (share_url) → an h264/h265 CDN video URL carrying an `X-snsvideoflag` query param. This param makes WeChat's CDN return the **plaintext, pre-transcoded** stream (`X-encflag: 0` in the response headers) instead of the ISAAC64-encrypted original that TikHub's own media URL points to — so no separate decrypt step is needed.
+5. Download that CDN URL with WeChat headers.
+
+Steps 2–3 are billed by TikHub ($0.01 each, $0.02/video total); step 4 (the community worker) is free but is a third-party service outside this project's control.
