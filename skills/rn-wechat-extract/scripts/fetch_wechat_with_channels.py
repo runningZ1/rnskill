@@ -7,24 +7,35 @@ directly playable URL for these, only opaque identifiers):
 
     1. Extract export_id + object_nonce_id from the <mp-common-video> embed tag
        (or use a direct weixin.qq.com/sph/... share link if the article has one).
-    2. TikHub fetch_video_detail(export_id, object_nonce_id) -> resolve the real
-       numeric object_id (the export_id/nonce pair alone is not a stable identifier).
-    3. TikHub fetch_video_share_url(object_id) -> weixin.qq.com/sph/xxx share link.
-    4. sph.litao.workers.dev fetch_video_profile(share_url) -> h264/h265 CDN url.
-       This CDN url carries an X-snsvideoflag query param that makes WeChat's
-       CDN return the plaintext, pre-transcoded stream (X-encflag: 0) instead of
-       the ISAAC64-encrypted original — so no decrypt step is needed afterwards.
-    5. Download that CDN url with WeChat headers.
+    2. [TikHub, paid] fetch_video_detail(export_id, object_nonce_id) -> resolve the
+       real numeric object_id (the export_id/nonce pair alone is not a stable identifier).
+    3. [TikHub, paid] fetch_video_share_url(object_id) -> weixin.qq.com/sph/xxx share link.
+    4. [Third-party community worker, free] sph.litao.workers.dev fetch_video_profile
+       (share_url) -> h264/h265 CDN url. This CDN url carries an X-snsvideoflag query
+       param that makes WeChat's CDN return the plaintext, pre-transcoded stream
+       (X-encflag: 0) instead of the ISAAC64-encrypted original — so no decrypt
+       step is needed afterwards.
+    5. Download that CDN url with WeChat headers (hits WeChat's own CDN directly).
 
-Requires a TikHub API key (https://tikhub.io) passed via --tikhub-key or the
-TIKHUB_API_KEY environment variable. Steps 2+3 cost $0.01 each in TikHub credits
-per video ($0.02 total); step 4 (the community worker) is free. Without a key,
-video channel videos are still detected and reported but not downloaded.
+Steps 2-4 depend on two external services that are NOT part of this project:
+- TikHub (https://tikhub.io): a paid commercial API. Requires your own API key,
+  passed via --tikhub-key or the TIKHUB_API_KEY environment variable. Steps 2+3
+  are billed at $0.01 each ($0.02/video total). We are not affiliated with TikHub.
+- sph.litao.workers.dev: a free, already-deployed Cloudflare Worker run by a third
+  party, not by this project. It's a public instance of the open-source project
+  ltaoo/wx_channels_download (https://github.com/ltaoo/wx_channels_download) — we
+  did not write or deploy it, and its uptime is outside our control. To self-host,
+  deploy that project yourself and point SPH_WORKER_URL below at your own instance.
+
+Without a TikHub key, video channel videos are still detected and reported but
+not downloaded; everything else (text, images, native videos) still works.
 
 Based on:
 - Original: Pluviobyte/rnskill
-- Video channel resolution: TikHub WeChat-Channels-V2-API
-- Share-link-to-CDN-url resolution: ltaoo/wx_channels_download (sph.litao.workers.dev)
+- Video channel resolution: TikHub WeChat-Channels-V2-API (https://docs.tikhub.io)
+- Share-link-to-CDN-url resolution: ltaoo/wx_channels_download
+  (https://github.com/ltaoo/wx_channels_download), used via its already-deployed
+  public instance at sph.litao.workers.dev
 """
 
 import sys

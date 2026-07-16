@@ -231,12 +231,18 @@ python3 "$WX_HOME/scripts/fetch_wechat_with_channels.py" "<url>" \
 
 **Video Channel (视频号) Videos:**
 
-The article HTML has no directly playable URL for a 视频号-embedded video, only opaque identifiers. Resolving one to a downloadable file takes 3 network hops:
+The article HTML has no directly playable URL for a 视频号-embedded video, only opaque identifiers. Resolving one to a downloadable file takes 3 network hops, **two of which call third-party services not built or operated by this project** — see [Third-Party Services](#third-party-services-视频号-downloads-only) below before relying on this in production.
 
 1. Extract `export_id` (`data-id="export/..."`) and `object_nonce_id` (`data-nonceid`) from the article's `<mp-common-videosnap>` embed tag — or use a direct `weixin.qq.com/sph/...` share link if the article already has one.
-2. TikHub `fetch_video_detail` (export_id + object_nonce_id) → resolve the real numeric `object_id`. Note `object_nonce_id` alone is *not* the object_id — a common mix-up since both are numeric strings.
-3. TikHub `fetch_video_share_url` (object_id) → a `weixin.qq.com/sph/xxx` share link.
-4. Community worker `sph.litao.workers.dev/api/fetch_video_profile` (share_url) → an h264/h265 CDN video URL carrying an `X-snsvideoflag` query param. This param makes WeChat's CDN return the **plaintext, pre-transcoded** stream (`X-encflag: 0` in the response headers) instead of the ISAAC64-encrypted original that TikHub's own media URL points to — so no separate decrypt step is needed.
-5. Download that CDN URL with WeChat headers.
+2. **[TikHub]** `fetch_video_detail` (export_id + object_nonce_id) → resolve the real numeric `object_id`. Note `object_nonce_id` alone is *not* the object_id — a common mix-up since both are numeric strings.
+3. **[TikHub]** `fetch_video_share_url` (object_id) → a `weixin.qq.com/sph/xxx` share link.
+4. **[Third-party community worker]** `sph.litao.workers.dev/api/fetch_video_profile` (share_url) → an h264/h265 CDN video URL carrying an `X-snsvideoflag` query param. This param makes WeChat's CDN return the **plaintext, pre-transcoded** stream (`X-encflag: 0` in the response headers) instead of the ISAAC64-encrypted original that TikHub's own media URL points to — so no separate decrypt step is needed.
+5. Download that CDN URL with WeChat headers (no third party involved — this hits WeChat's own CDN directly).
 
-Steps 2–3 are billed by TikHub ($0.01 each, $0.02/video total); step 4 (the community worker) is free but is a third-party service outside this project's control.
+## Third-Party Services (视频号 downloads only)
+
+Everything else in this skill (text/image/native-video extraction) is self-contained and needs no third-party service or API key. Only the 视频号 video pipeline in `fetch_wechat_with_channels.py` (steps 2–4 above) depends on two external services **neither built nor operated by this project**:
+
+1. **[TikHub](https://tikhub.io)** — a paid, commercial third-party API. You need your own TikHub account and API key (`--tikhub-key` / `TIKHUB_API_KEY`). This project has no affiliation with TikHub; it just calls two of their public endpoints (`fetch_video_detail`, `fetch_video_share_url`), each billed at $0.01/call ($0.02/video total). See their [WeChat Channels V2 API docs](https://docs.tikhub.io).
+
+2. **[sph.litao.workers.dev](https://sph.litao.workers.dev/)** — a free, already-deployed Cloudflare Worker run by a third party (not by this project or by TikHub). It is a public instance of the open-source project **[ltaoo/wx_channels_download](https://github.com/ltaoo/wx_channels_download)**, and we simply call its already-running `/api/fetch_video_profile` endpoint. We did not write or deploy this service, and its uptime is outside this project's control. If it ever goes down, the fallback is to self-host that same open-source project yourself and point `SPH_WORKER_URL` in `fetch_wechat_with_channels.py` at your own deployment.
